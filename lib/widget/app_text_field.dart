@@ -4,6 +4,7 @@ import 'package:time_sheet/core/theme/app_style.dart';
 
 class AppTextField extends StatelessWidget {
   const AppTextField({
+    super.key,
     this.onChanged,
     this.hintText,
     this.minLines = 1,

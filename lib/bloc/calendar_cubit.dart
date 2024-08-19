@@ -11,7 +11,6 @@ class CalendarCubit extends Cubit<List<WorkDay>> {
 
   Future<void> loadWorkDays() async {
     final workDays = await _dbHelper.getAllWorkDays();
-    print('loadWorkDays: $workDays');
     emit(workDays);
   }
 

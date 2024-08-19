@@ -233,7 +233,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildBottomSummary() {
     return BlocBuilder<CalendarCubit, List<WorkDay>>(
       builder: (context, workDays) {
-        print('_buildBottomSummary: $focusedDay ${workDays.length} $workDays');
         final daysWorked = workDays.length;
 
         final focusedYear = focusedDay.year;
@@ -246,16 +245,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
         final incomePerMonth = monthWorkDays.fold(0.0, (sum, wd) => sum + (wd.hoursWorked * wd.ratePerHour));
 
-        print('monthWorkDays: ${monthWorkDays.length}');
-
         // YEAR
         final yearWorkDays = workDays.where((wd) => wd.date.year == focusedYear);
-
-        yearWorkDays.forEach((wd) {
-          print('${wd.hoursWorked}, ${wd.ratePerHour}');
-        });
-
-        print('yearWorkDays: ${yearWorkDays.length}');
 
         final incomeForYear = yearWorkDays.fold<double>(0.0, (sum, wd) => sum + (wd.hoursWorked * wd.ratePerHour));
 
@@ -422,31 +413,22 @@ Comment: ${workDay.comment}
   }
 
   Future<void> _downloadReport(WorkDay workDay) async {
-    // Request storage permission
     final permissionStatus = await Permission.storage.request();
-    if (!permissionStatus.isGranted) {
-      // Handle the case when permission is denied
-      print('Storage permission is required to save files.');
-      return;
-    }
+    if (!permissionStatus.isGranted) return;
 
-    // Allow the user to pick a directory
     final directoryPath = await FilePicker.platform.getDirectoryPath();
-    if (directoryPath == null) return; // User canceled the picker
+    if (directoryPath == null) return;
 
     final directory = Directory(directoryPath);
 
-    // Ensure the directory exists
     if (!(await directory.exists())) {
       await directory.create(recursive: true);
     }
 
-    // Create the file path
     final fileName = '${formatDateFile(workDay.date)}.txt';
     final filePath = p.join(directoryPath, fileName);
     final file = File(filePath);
 
-    // Create the content
     final content = '''
 Workday Report:
 Date: ${formatDate(workDay.date)}
@@ -456,14 +438,10 @@ Comment: ${workDay.comment}
   '''
         .trim();
 
-    // Write the content to the file
     try {
-      print('here');
-      // await file.create();
       await file.writeAsString(content);
-      print('Report saved to $filePath');
     } catch (e) {
-      print('Failed to save report: $e');
+      print(e);
     }
   }
 }
