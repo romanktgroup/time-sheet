@@ -16,13 +16,14 @@ class BottomRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Flexible(
+        Expanded(
           child: Text(
             title,
             style: AppStyle.inter18w500.copyWith(color: AppColor.black),
+            maxLines: 1,
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 12),
         Text(
           text,
           style: AppStyle.inter18w500.copyWith(color: AppColor.black),
