@@ -6,6 +6,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:time_sheet/bloc/calendar_cubit.dart';
 import 'package:time_sheet/core/const/app_icon.dart';
 import 'package:time_sheet/core/helpers/extension/date_time_extension.dart';
+import 'package:time_sheet/core/helpers/extension/iterable_extension.dart';
 import 'package:time_sheet/core/theme/app_color.dart';
 import 'package:time_sheet/core/theme/app_style.dart';
 import 'package:time_sheet/model/work_day_model.dart';
@@ -160,25 +161,64 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 this.focusedDay = focusedDay;
               });
             },
-            calendarStyle: CalendarStyle(
-              defaultDecoration: boxDecoration,
-              weekendDecoration: boxDecoration,
-              todayDecoration: boxDecoration,
-              selectedDecoration: boxDecoration.copyWith(
-                border: Border.all(color: AppColor.blue, width: 2),
+            calendarBuilders: CalendarBuilders(
+              defaultBuilder: (context, day, focusedDay) => cellBuilder(
+                day,
+                workDays,
+                AppStyle.inter14w500.copyWith(color: AppColor.black),
+                boxDecoration,
               ),
-              rangeStartDecoration: boxDecoration,
-              rangeEndDecoration: boxDecoration,
-              outsideDecoration: boxDecoration,
-              cellMargin: const EdgeInsets.all(5 / 2),
-              defaultTextStyle: AppStyle.inter14w500.copyWith(color: AppColor.black),
-              todayTextStyle: AppStyle.inter14w500.copyWith(color: AppColor.black),
-              selectedTextStyle: AppStyle.inter14w500.copyWith(color: AppColor.black),
-              outsideTextStyle: AppStyle.inter14w400.copyWith(color: AppColor.titleDayOther),
+              todayBuilder: (context, day, focusedDay) => cellBuilder(
+                day,
+                workDays,
+                AppStyle.inter14w500.copyWith(color: AppColor.black),
+                boxDecoration,
+              ),
+              selectedBuilder: (context, day, focusedDay) => cellBuilder(
+                day,
+                workDays,
+                AppStyle.inter14w500.copyWith(color: AppColor.black),
+                boxDecoration.copyWith(
+                  border: Border.all(color: AppColor.blue, width: 2),
+                ),
+              ),
+              outsideBuilder: (context, day, focusedDay) => cellBuilder(
+                day,
+                workDays,
+                AppStyle.inter14w400.copyWith(color: AppColor.titleDayOther),
+                boxDecoration,
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget cellBuilder(DateTime day, List<WorkDay> workDays, TextStyle style, BoxDecoration boxDecoration) {
+    final workDay = workDays.firstWhereOrNull((wd) => wd.date.isSameDay(day));
+
+    return Container(
+      height: 42,
+      margin: const EdgeInsets.all(5 / 2),
+      alignment: Alignment.center,
+      decoration: boxDecoration,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            day.day.toString(),
+            style: style,
+          ),
+          if (workDay != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              (workDay.hoursWorked * workDay.ratePerHour).toStringAsFixed(0),
+              style: AppStyle.inter12w600.copyWith(color: AppColor.green),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -263,15 +303,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void showCustomDialog(BuildContext context, DateTime selectedDay) {
     final workDayCubit = context.read<CalendarCubit>();
-    WorkDay workDay = workDayCubit.state.firstWhere(
-      (wd) => wd.date.isSameDay(selectedDay),
-      orElse: () => WorkDay(
-        date: selectedDay,
-        hoursWorked: 0.0,
-        ratePerHour: 0.0,
-        comment: '',
-      ),
-    );
+    WorkDay workDay = workDayCubit.state.firstWhereOrNull((wd) => wd.date.isSameDay(selectedDay)) ??
+        WorkDay(
+          date: selectedDay,
+          hoursWorked: 0.0,
+          ratePerHour: 0.0,
+          comment: '',
+        );
 
     showDialog(
       barrierColor: AppColor.black.withOpacity(.7),

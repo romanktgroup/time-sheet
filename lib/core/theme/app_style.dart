@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 
 abstract class AppStyle {
+  static const inter12w600 = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 12,
+    height: 14.52 / 12,
+    fontWeight: FontWeight.w600,
+  );
+
   static const inter14w500 = TextStyle(
     fontFamily: 'Inter',
     fontSize: 14,
