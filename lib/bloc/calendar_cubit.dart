@@ -11,6 +11,7 @@ class CalendarCubit extends Cubit<List<WorkDay>> {
 
   Future<void> loadWorkDays() async {
     final workDays = await _dbHelper.getAllWorkDays();
+    print('loadWorkDays: $workDays');
     emit(workDays);
   }
 
@@ -19,10 +20,8 @@ class CalendarCubit extends Cubit<List<WorkDay>> {
     loadWorkDays();
   }
 
-  Future<void> deleteWorkDay(int id) async {
-    await _dbHelper.deleteWorkDay(id);
+  Future<void> deleteWorkDay(DateTime date) async {
+    await _dbHelper.deleteWorkDayByDate(date);
     loadWorkDays();
   }
-
-  // Дополнительные методы для управления событиями
 }

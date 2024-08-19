@@ -13,7 +13,6 @@ class WorkDay {
     required this.comment,
   });
 
-  // Конвертация объекта в Map для сохранения в базу данных
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -24,7 +23,6 @@ class WorkDay {
     };
   }
 
-  // Конвертация Map в объект WorkDay
   factory WorkDay.fromMap(Map<String, dynamic> map) {
     return WorkDay(
       id: map['id'],
@@ -35,7 +33,6 @@ class WorkDay {
     );
   }
 
-  // Метод copyWith для создания копий объекта с изменением отдельных полей
   WorkDay copyWith({
     int? id,
     DateTime? date,
@@ -50,5 +47,10 @@ class WorkDay {
       ratePerHour: ratePerHour ?? this.ratePerHour,
       comment: comment ?? this.comment,
     );
+  }
+
+  @override
+  String toString() {
+    return 'WorkDay{id: $id, date: $date, hoursWorked: $hoursWorked, ratePerHour: $ratePerHour, comment: $comment}';
   }
 }

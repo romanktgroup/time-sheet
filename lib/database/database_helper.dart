@@ -33,7 +33,7 @@ class DatabaseHelper {
       '''
       CREATE TABLE workdays (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
+        date TEXT NOT NULL UNIQUE,
         hoursWorked REAL NOT NULL,
         ratePerHour REAL NOT NULL,
         comment TEXT
@@ -44,22 +44,45 @@ class DatabaseHelper {
 
   Future<int> insertWorkDay(WorkDay workDay) async {
     final db = await database;
-    return await db.insert('workdays', workDay.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+
+    final existingWorkDay = await db.query(
+      'workdays',
+      where: 'date = ?',
+      whereArgs: [workDay.date.toIso8601String()],
+    );
+
+    if (existingWorkDay.isNotEmpty) {
+      return await db.update(
+        'workdays',
+        workDay.toMap(),
+        where: 'date = ?',
+        whereArgs: [workDay.date.toIso8601String()],
+      );
+    } else {
+      return await db.insert(
+        'workdays',
+        workDay.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
   }
 
   Future<List<WorkDay>> getAllWorkDays() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('workdays');
+    final List<Map<String, dynamic>> workDaysMap = await db.query('workdays');
 
-    return List.generate(maps.length, (i) {
-      return WorkDay.fromMap(maps[i]);
-    });
+    return workDaysMap.map((map) => WorkDay.fromMap(map)).toList();
   }
 
-  Future<int> deleteWorkDay(int id) async {
+  Future<int> deleteWorkDayByDate(DateTime date) async {
     final db = await database;
-    return await db.delete('workdays', where: 'id = ?', whereArgs: [id]);
-  }
 
-  // Дополнительные методы для обновления, получения данных и т.д.
+    final formattedDate = date.toIso8601String().split('T').first;
+
+    return await db.delete(
+      'workdays',
+      where: 'strftime("%Y-%m-%d", date) = ?',
+      whereArgs: [formattedDate],
+    );
+  }
 }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:time_sheet/bloc/calendar_cubit.dart';
 import 'package:time_sheet/core/const/app_icon.dart';
+import 'package:time_sheet/core/helpers/extension/date_time_extension.dart';
 import 'package:time_sheet/core/theme/app_color.dart';
 import 'package:time_sheet/core/theme/app_style.dart';
 import 'package:time_sheet/model/work_day_model.dart';
@@ -74,7 +75,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
         const SizedBox(width: 24),
         GestureDetector(
           onTap: () {
-            // focusedDay = DateTime(focusedDay.year, focusedDay.month - 1);
             controller.previousPage(
               duration: const Duration(milliseconds: 300),
               curve: Curves.ease,
@@ -92,7 +92,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         GestureDetector(
           onTap: () {
-            // focusedDay = DateTime(focusedDay.year, focusedDay.month + 1);
             controller.nextPage(
               duration: const Duration(milliseconds: 300),
               curve: Curves.ease,
@@ -186,10 +185,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildBottomSummary() {
     return BlocBuilder<CalendarCubit, List<WorkDay>>(
       builder: (context, workDays) {
+        print('_buildBottomSummary: $focusedDay ${workDays.length} $workDays');
         final daysWorked = workDays.length;
-        final hoursPerMonth = workDays.fold(0.0, (sum, wd) => sum + wd.hoursWorked);
-        final incomePerMonth = workDays.fold(0.0, (sum, wd) => sum + wd.hoursWorked * wd.ratePerHour);
-        final incomeForYear = incomePerMonth;
+
+        final focusedYear = focusedDay.year;
+        final focusedMonth = focusedDay.month;
+
+        // MONTH
+        final monthWorkDays = workDays.where((wd) => wd.date.year == focusedYear && wd.date.month == focusedMonth);
+
+        final hoursPerMonth = monthWorkDays.fold(0.0, (sum, wd) => sum + wd.hoursWorked);
+
+        final incomePerMonth = monthWorkDays.fold(0.0, (sum, wd) => sum + (wd.hoursWorked * wd.ratePerHour));
+
+        print('monthWorkDays: ${monthWorkDays.length}');
+
+        // YEAR
+        final yearWorkDays = workDays.where((wd) => wd.date.year == focusedYear);
+
+        yearWorkDays.forEach((wd) {
+          print('${wd.hoursWorked}, ${wd.ratePerHour}');
+        });
+
+        print('yearWorkDays: ${yearWorkDays.length}');
+
+        final incomeForYear = yearWorkDays.fold<double>(0.0, (sum, wd) => sum + (wd.hoursWorked * wd.ratePerHour));
 
         return Container(
           color: AppColor.backgroundPurple,
@@ -231,7 +251,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           const SizedBox(height: 10),
           AppButton(
             title: 'Delete report',
-            onTap: () {},
+            onTap: () {
+              context.read<CalendarCubit>().deleteWorkDay(selectedDay!);
+            },
           ),
           if (selectedDay == null) SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
@@ -240,11 +262,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void showCustomDialog(BuildContext context, DateTime selectedDay) {
-    final workDay = WorkDay(
-      date: selectedDay,
-      hoursWorked: 8.0, // или другие значения по умолчанию
-      ratePerHour: 20.0, // или другие значения по умолчанию
-      comment: '',
+    final workDayCubit = context.read<CalendarCubit>();
+    WorkDay workDay = workDayCubit.state.firstWhere(
+      (wd) => wd.date.isSameDay(selectedDay),
+      orElse: () => WorkDay(
+        date: selectedDay,
+        hoursWorked: 0.0,
+        ratePerHour: 0.0,
+        comment: '',
+      ),
     );
 
     showDialog(
@@ -266,22 +292,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     const SizedBox(height: 20),
                     AppTextField(
-                      initialValue: workDay.hoursWorked.toString(),
+                      initialValue: workDay.hoursWorked == 0 ? '' : workDay.hoursWorked.toString(),
                       hintText: 'Opening hours',
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
-                        workDay.copyWith(
-                          hoursWorked: double.tryParse(value) ?? workDay.hoursWorked,
-                        );
+                        workDay = workDay.copyWith(hoursWorked: double.tryParse(value));
                       },
                     ),
                     const SizedBox(height: 10),
                     AppTextField(
-                      initialValue: workDay.ratePerHour.toString(),
+                      initialValue: workDay.ratePerHour == 0 ? '' : workDay.ratePerHour.toString(),
                       hintText: 'Rate per Hour',
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
-                        workDay.copyWith(ratePerHour: double.tryParse(value) ?? workDay.ratePerHour);
+                        workDay = workDay.copyWith(ratePerHour: double.tryParse(value));
                       },
                     ),
                     const SizedBox(height: 10),
@@ -292,7 +316,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       minLines: 3,
                       maxLines: 5,
                       onChanged: (value) {
-                        workDay.copyWith(comment: value);
+                        workDay = workDay.copyWith(comment: value);
                       },
                     ),
                     const SizedBox(height: 20),
@@ -300,6 +324,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       title: 'OK',
                       onTap: () {
                         context.read<CalendarCubit>().addWorkDay(workDay);
+                        Navigator.of(context).pop();
                       },
                     ),
                     const SizedBox(height: 10),

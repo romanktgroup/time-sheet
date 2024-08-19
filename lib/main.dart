@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       create: (context) => CalendarCubit(),
       child: MaterialApp(
-        title: 'Flutter Demo',
+        title: 'Time Sheet',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
