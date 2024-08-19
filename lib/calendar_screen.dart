@@ -342,6 +342,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       initialValue: workDay.hoursWorked == 0 ? '' : workDay.hoursWorked.toString(),
                       hintText: 'Opening hours',
                       keyboardType: TextInputType.number,
+                      max: 24,
                       onChanged: (value) {
                         workDay = workDay.copyWith(hoursWorked: double.tryParse(value));
                       },
