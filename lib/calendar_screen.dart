@@ -44,27 +44,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => CalendarCubit(),
-      child: Scaffold(
-        backgroundColor: AppColor.background,
-        body: SingleChildScrollView(
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height,
-            child: Column(
-              children: [
-                SizedBox(height: MediaQuery.of(context).padding.top),
-                const SqueezedBox(maxHeight: 22),
-                _buildMonthRow(),
-                const SqueezedBox(maxHeight: 35),
-                _buildDaysOfWeek(),
-                const SqueezedBox(maxHeight: 15),
-                _buildCalendar(),
-                const Spacer(),
-                _buildBottomSummary(),
-                _buildBottomButtons(),
-              ],
-            ),
+    return Scaffold(
+      backgroundColor: AppColor.background,
+      body: SingleChildScrollView(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height,
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.of(context).padding.top),
+              const SqueezedBox(maxHeight: 22),
+              _buildMonthRow(),
+              const SqueezedBox(maxHeight: 35),
+              _buildDaysOfWeek(),
+              const SqueezedBox(maxHeight: 15),
+              _buildCalendar(),
+              const Spacer(),
+              _buildBottomSummary(),
+              _buildBottomButtons(),
+            ],
           ),
         ),
       ),
@@ -180,7 +177,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
               selectedTextStyle: AppStyle.inter14w500.copyWith(color: AppColor.black),
               outsideTextStyle: AppStyle.inter14w400.copyWith(color: AppColor.titleDayOther),
             ),
-            eventLoader: (day) => workDays.where((wd) => isSameDay(wd.date, day)).toList(),
           ),
         );
       },
@@ -302,7 +298,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     const SizedBox(height: 20),
                     AppButton(
                       title: 'OK',
-                      onTap: () {},
+                      onTap: () {
+                        context.read<CalendarCubit>().addWorkDay(workDay);
+                      },
                     ),
                     const SizedBox(height: 10),
                     AppButton(
