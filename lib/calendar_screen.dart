@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:time_sheet/bloc/calendar_cubit.dart';
 import 'package:time_sheet/core/const/app_icon.dart';
@@ -28,7 +29,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime firstDay = DateTime(1990);
   DateTime lastDay = DateTime(2100);
 
-  String format(DateTime date) => DateFormat('MMMM yyyy').format(date);
+  String formatMonthYear(DateTime date) => DateFormat('MMMM yyyy').format(date);
+  String formatDate(DateTime date) => DateFormat('MM/dd/yyyy').format(date);
 
   late PageController controller;
 
@@ -86,7 +88,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         Expanded(
           child: Text(
-            format(focusedDay),
+            formatMonthYear(focusedDay),
             style: AppStyle.inter20w400.copyWith(color: AppColor.titleDay),
             textAlign: TextAlign.center,
           ),
@@ -272,32 +274,42 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildBottomButtons() {
-    return Container(
-      color: AppColor.white,
-      padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 20),
-      child: Column(
-        children: [
-          AppButton(
-            title: 'Open report',
-            onTap: () {
-              showCustomDialog(context, selectedDay!);
-            },
+    return BlocBuilder<CalendarCubit, List<WorkDay>>(
+      builder: (context, workDays) {
+        final WorkDay? workDay = workDays.firstWhereOrNull((wd) => wd.date.isSameDay(selectedDay!));
+
+        return Container(
+          color: AppColor.white,
+          padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 20),
+          child: Column(
+            children: [
+              AppButton(
+                title: 'Open report',
+                onTap: () {
+                  showCustomDialog(context, selectedDay!);
+                },
+              ),
+              if (workDay != null) ...[
+                const SizedBox(height: 10),
+                AppButton(
+                  title: 'Send report',
+                  onTap: () {
+                    shareReport(workDay);
+                  },
+                ),
+                const SizedBox(height: 10),
+                AppButton(
+                  title: 'Delete report',
+                  onTap: () {
+                    context.read<CalendarCubit>().deleteWorkDay(selectedDay!);
+                  },
+                ),
+              ],
+              if (selectedDay == null) SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ),
-          const SizedBox(height: 10),
-          AppButton(
-            title: 'Send report',
-            onTap: () {},
-          ),
-          const SizedBox(height: 10),
-          AppButton(
-            title: 'Delete report',
-            onTap: () {
-              context.read<CalendarCubit>().deleteWorkDay(selectedDay!);
-            },
-          ),
-          if (selectedDay == null) SizedBox(height: MediaQuery.of(context).padding.bottom),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -325,7 +337,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      DateFormat('MM/dd/yyyy').format(selectedDay),
+                      formatDate(selectedDay),
                       style: AppStyle.inter18w500.copyWith(color: AppColor.black),
                     ),
                     const SizedBox(height: 20),
@@ -388,5 +400,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
         );
       },
     );
+  }
+
+  void shareReport(WorkDay workDay) {
+    final String message = '''
+Workday Report:
+Date: ${formatDate(workDay.date)}
+Hours Worked: ${workDay.hoursWorked}
+Rate Per Hour: ${workDay.ratePerHour}
+Comment: ${workDay.comment}
+  '''
+        .trim();
+
+    Share.share(message);
   }
 }
