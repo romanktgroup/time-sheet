@@ -359,7 +359,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     AppTextField(
                       initialValue: workDay.comment,
                       hintText: 'Comment...',
-                      keyboardType: TextInputType.number,
                       minLines: 3,
                       maxLines: 5,
                       onChanged: (value) {
