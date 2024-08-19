@@ -1,12 +1,8 @@
-import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:time_sheet/bloc/calendar_cubit.dart';
@@ -374,12 +370,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         Navigator.of(context).pop();
                       },
                     ),
-                    const SizedBox(height: 10),
-                    AppButton(
-                      title: 'Download',
-                      style: AppButtonStyle.outlined,
-                      onTap: () => _downloadReport(workDay),
-                    ),
                   ],
                 ),
               ),
@@ -410,38 +400,5 @@ Comment: ${workDay.comment}
         .trim();
 
     Share.share(message);
-  }
-
-  Future<void> _downloadReport(WorkDay workDay) async {
-    final permissionStatus = await Permission.storage.request();
-    if (!permissionStatus.isGranted) return;
-
-    final directoryPath = await FilePicker.platform.getDirectoryPath();
-    if (directoryPath == null) return;
-
-    final directory = Directory(directoryPath);
-
-    if (!(await directory.exists())) {
-      await directory.create(recursive: true);
-    }
-
-    final fileName = '${formatDateFile(workDay.date)}.txt';
-    final filePath = p.join(directoryPath, fileName);
-    final file = File(filePath);
-
-    final content = '''
-Workday Report:
-Date: ${formatDate(workDay.date)}
-Hours Worked: ${workDay.hoursWorked}
-Rate Per Hour: ${workDay.ratePerHour}
-Comment: ${workDay.comment}
-  '''
-        .trim();
-
-    try {
-      await file.writeAsString(content);
-    } catch (e) {
-      print(e);
-    }
   }
 }
