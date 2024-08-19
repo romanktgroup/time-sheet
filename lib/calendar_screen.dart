@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:time_sheet/bloc/calendar_cubit.dart';
@@ -31,6 +36,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   String formatMonthYear(DateTime date) => DateFormat('MMMM yyyy').format(date);
   String formatDate(DateTime date) => DateFormat('MM/dd/yyyy').format(date);
+  String formatDateFile(DateTime date) => DateFormat('MM-dd-yyyy').format(date);
 
   late PageController controller;
 
@@ -381,7 +387,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     AppButton(
                       title: 'Download',
                       style: AppButtonStyle.outlined,
-                      onTap: () {},
+                      onTap: () => _downloadReport(workDay),
                     ),
                   ],
                 ),
@@ -413,5 +419,51 @@ Comment: ${workDay.comment}
         .trim();
 
     Share.share(message);
+  }
+
+  Future<void> _downloadReport(WorkDay workDay) async {
+    // Request storage permission
+    final permissionStatus = await Permission.storage.request();
+    if (!permissionStatus.isGranted) {
+      // Handle the case when permission is denied
+      print('Storage permission is required to save files.');
+      return;
+    }
+
+    // Allow the user to pick a directory
+    final directoryPath = await FilePicker.platform.getDirectoryPath();
+    if (directoryPath == null) return; // User canceled the picker
+
+    final directory = Directory(directoryPath);
+
+    // Ensure the directory exists
+    if (!(await directory.exists())) {
+      await directory.create(recursive: true);
+    }
+
+    // Create the file path
+    final fileName = '${formatDateFile(workDay.date)}.txt';
+    final filePath = p.join(directoryPath, fileName);
+    final file = File(filePath);
+
+    // Create the content
+    final content = '''
+Workday Report:
+Date: ${formatDate(workDay.date)}
+Hours Worked: ${workDay.hoursWorked}
+Rate Per Hour: ${workDay.ratePerHour}
+Comment: ${workDay.comment}
+  '''
+        .trim();
+
+    // Write the content to the file
+    try {
+      print('here');
+      // await file.create();
+      await file.writeAsString(content);
+      print('Report saved to $filePath');
+    } catch (e) {
+      print('Failed to save report: $e');
+    }
   }
 }
